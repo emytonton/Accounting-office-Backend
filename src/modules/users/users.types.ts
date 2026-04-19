@@ -13,5 +13,17 @@ export interface User {
   updatedAt: Date;
 }
 
-export type CreateUserDto = Omit<User, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateUserDto = Partial<Omit<User, 'id' | 'tenantId' | 'createdAt' | 'updatedAt'>>;
+export type PublicUser = Omit<User, 'passwordHash'>;
+
+export interface CreateUserDto {
+  tenantId: string;
+  name: string;
+  identifier: string;
+  password: string;
+  role: UserRole;
+  sector?: string;
+}
+
+export type UpdateUserDto = Partial<
+  Omit<User, 'id' | 'tenantId' | 'passwordHash' | 'createdAt' | 'updatedAt'>
+>;
