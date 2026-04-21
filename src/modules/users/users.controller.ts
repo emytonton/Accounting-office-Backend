@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { UsersService } from './users.service';
-import { InMemoryUsersRepository } from './users.repository';
+import { usersRepository } from '../../shared/repositories';
 import { successResponse } from '../../shared/utils/response';
 
-const service = new UsersService(new InMemoryUsersRepository());
+const service = new UsersService(usersRepository);
 
 export async function findAll(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

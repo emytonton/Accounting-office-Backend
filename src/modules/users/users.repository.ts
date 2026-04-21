@@ -5,6 +5,7 @@ export interface IUsersRepository {
   findAll(tenantId: string): Promise<User[]>;
   findById(tenantId: string, id: string): Promise<User | null>;
   findByIdentifier(tenantId: string, identifier: string): Promise<User | null>;
+  findByIdentifierGlobally(identifier: string): Promise<User | null>;
   create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
 }
 
@@ -21,6 +22,10 @@ export class InMemoryUsersRepository implements IUsersRepository {
 
   async findByIdentifier(tenantId: string, identifier: string): Promise<User | null> {
     return this.users.find((u) => u.tenantId === tenantId && u.identifier === identifier) ?? null;
+  }
+
+  async findByIdentifierGlobally(identifier: string): Promise<User | null> {
+    return this.users.find((u) => u.identifier === identifier) ?? null;
   }
 
   async create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
