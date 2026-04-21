@@ -1,8 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
+import { AuthService } from './auth.service';
+import { usersRepository } from '../../shared/repositories';
+import { successResponse } from '../../shared/utils/response';
 
-export async function login(_req: Request, res: Response, next: NextFunction): Promise<void> {
+const service = new AuthService(usersRepository);
+
+export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    res.json({ success: true, message: 'module ready' });
+    const result = await service.login(req.body);
+    successResponse(res, result);
   } catch (err) {
     next(err);
   }
@@ -10,7 +16,8 @@ export async function login(_req: Request, res: Response, next: NextFunction): P
 
 export async function logout(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    res.json({ success: true, message: 'module ready' });
+    // TODO: implement token blacklist / session invalidation
+    res.json({ success: true, message: 'Logged out successfully' });
   } catch (err) {
     next(err);
   }

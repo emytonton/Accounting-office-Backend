@@ -6,6 +6,13 @@ export interface LoginRequest {
 export interface LoginResponse {
   token: string;
   expiresIn: string;
+  user: {
+    id: string;
+    name: string;
+    role: string;
+    sector?: string;
+    tenantId: string;
+  };
 }
 
 export interface AuthTokenPayload {
@@ -13,4 +20,10 @@ export interface AuthTokenPayload {
   tenantId: string;
   role: 'admin' | 'collaborator';
   sector?: string;
+}
+
+export interface LoginAttempt {
+  count: number;
+  lastAttemptAt: Date;
+  blockedUntil?: Date;
 }
