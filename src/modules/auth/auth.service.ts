@@ -1,24 +1,42 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { randomBytes, randomUUID } from 'crypto';
 import { IUsersRepository } from '../users/users.repository';
-import { LoginRequest, LoginResponse, LoginAttempt, AuthTokenPayload } from './auth.types';
+import { IEmailService } from '../../shared/services/email.service';
+import {
+  LoginRequest,
+  LoginResponse,
+  LoginAttempt,
+  AuthTokenPayload,
+  PasswordResetToken,
+} from './auth.types';
 import { AppError } from '../../shared/errors/AppError';
 import { env } from '../../config/env';
 
 const MAX_ATTEMPTS = 5;
 const BLOCK_DURATION_MS = 15 * 60 * 1000;
+const RESET_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
 export class AuthService {
   private readonly attempts = new Map<string, LoginAttempt>();
+  private readonly resetTokens = new Map<string, PasswordResetToken>();
 
-  constructor(private readonly usersRepository: IUsersRepository) {}
+  constructor(
+    private readonly usersRepository: IUsersRepository,
+    private readonly emailService: IEmailService,
+  ) {}
 
   async login(dto: LoginRequest): Promise<LoginResponse> {
     this.checkIfBlocked(dto.identifier);
 
     const user = await this.usersRepository.findByIdentifierGlobally(dto.identifier);
 
-    const passwordMatch = user ? await bcrypt.compare(dto.password, user.passwordHash) : false;
+    if (user && !user.passwordHash) {
+      throw new AppError('Account not yet activated. Use the first access link.', 401, 'FIRST_ACCESS_REQUIRED');
+    }
+
+    const passwordMatch =
+      user && user.passwordHash ? await bcrypt.compare(dto.password, user.passwordHash) : false;
 
     // Same error for "user not found" and "wrong password" — never reveal which
     if (!user || !passwordMatch) {
@@ -54,6 +72,51 @@ export class AuthService {
         tenantId: user.tenantId,
       },
     };
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.usersRepository.findByIdentifierGlobally(email);
+
+    if (user) {
+      const isFirstAccess = !user.passwordHash;
+      const token = randomBytes(32).toString('hex');
+
+      this.resetTokens.set(token, {
+        id: randomUUID(),
+        userId: user.id,
+        token,
+        expiresAt: new Date(Date.now() + RESET_TOKEN_EXPIRY_MS),
+        isFirstAccess,
+      });
+
+      await this.emailService.sendPasswordResetLink(email, token, isFirstAccess);
+    }
+
+    // No error thrown whether email exists or not — never confirm existence
+  }
+
+  async validateResetToken(token: string): Promise<{ isFirstAccess: boolean }> {
+    const resetToken = this.resetTokens.get(token);
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+      throw new AppError('Invalid or expired link', 400, 'INVALID_RESET_TOKEN');
+    }
+
+    return { isFirstAccess: resetToken.isFirstAccess };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const resetToken = this.resetTokens.get(token);
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+      throw new AppError('Invalid or expired link', 400, 'INVALID_RESET_TOKEN');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await this.usersRepository.updatePassword(resetToken.userId, passwordHash);
+
+    // Single use — mark as used immediately after consumption
+    resetToken.usedAt = new Date();
   }
 
   private checkIfBlocked(identifier: string): void {
