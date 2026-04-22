@@ -17,7 +17,7 @@ export class UsersService {
       throw new AppError('Identifier already in use', 409, 'CONFLICT');
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const passwordHash = dto.password ? await bcrypt.hash(dto.password, 12) : null;
 
     const user = await this.repository.create({
       tenantId: dto.tenantId,

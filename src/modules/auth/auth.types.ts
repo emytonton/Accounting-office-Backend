@@ -27,3 +27,12 @@ export interface LoginAttempt {
   lastAttemptAt: Date;
   blockedUntil?: Date;
 }
+
+export interface PasswordResetToken {
+  id: string;
+  userId: string;
+  token: string;
+  expiresAt: Date;
+  usedAt?: Date;
+  isFirstAccess: boolean;
+}

@@ -7,6 +7,7 @@ export interface IUsersRepository {
   findByIdentifier(tenantId: string, identifier: string): Promise<User | null>;
   findByIdentifierGlobally(identifier: string): Promise<User | null>;
   create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
+  updatePassword(userId: string, passwordHash: string): Promise<void>;
 }
 
 export class InMemoryUsersRepository implements IUsersRepository {
@@ -33,5 +34,13 @@ export class InMemoryUsersRepository implements IUsersRepository {
     const user: User = { ...data, id: randomUUID(), createdAt: now, updatedAt: now };
     this.users.push(user);
     return user;
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    const user = this.users.find((u) => u.id === userId);
+    if (user) {
+      user.passwordHash = passwordHash;
+      user.updatedAt = new Date();
+    }
   }
 }

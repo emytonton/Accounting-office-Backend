@@ -5,7 +5,7 @@ export interface User {
   tenantId: string;
   name: string;
   identifier: string;
-  passwordHash: string;
+  passwordHash: string | null;
   role: UserRole;
   sector?: string;
   isActive: boolean;
@@ -19,7 +19,7 @@ export interface CreateUserDto {
   tenantId: string;
   name: string;
   identifier: string;
-  password: string;
+  password?: string;
   role: UserRole;
   sector?: string;
 }
