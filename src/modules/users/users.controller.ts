@@ -1,8 +1,24 @@
 import { Request, Response, NextFunction } from 'express';
+import { UsersService } from './users.service';
+import { InMemoryUsersRepository } from './users.repository';
+import { successResponse } from '../../shared/utils/response';
 
-export async function findAll(_req: Request, res: Response, next: NextFunction): Promise<void> {
+const service = new UsersService(new InMemoryUsersRepository());
+
+export async function findAll(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    res.json({ success: true, message: 'module ready', data: [] });
+    const { tenantId } = req.query as { tenantId: string };
+    const users = await service.findAll(tenantId);
+    successResponse(res, users);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const user = await service.create(req.body);
+    successResponse(res, user, 201);
   } catch (err) {
     next(err);
   }
