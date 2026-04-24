@@ -11,8 +11,10 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
   }
 }
 
-export async function logout(_req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function logout(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const token = req.headers.authorization!.slice(7);
+    await service.logout(token);
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (err) {
     next(err);
