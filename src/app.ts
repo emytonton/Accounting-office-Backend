@@ -16,7 +16,14 @@ import { auditRoutes } from './modules/audit/audit.routes';
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(
+  cors({
+    origin: env.NODE_ENV === 'production' ? env.APP_URL : '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['X-Refresh-Token'],
+  }),
+);
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
