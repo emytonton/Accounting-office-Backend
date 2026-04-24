@@ -13,9 +13,17 @@ export const forgotPasswordSchema = z.object({
   }),
 });
 
+export const validateResetTokenSchema = z.object({
+  body: z.object({
+    identifier: z.string().min(1, { message: 'identifier is required' }),
+    code: z.string().length(6, { message: 'code must be 6 digits' }),
+  }),
+});
+
 export const resetPasswordSchema = z.object({
   body: z.object({
-    token: z.string().min(1, { message: 'token is required' }),
+    identifier: z.string().min(1, { message: 'identifier is required' }),
+    code: z.string().length(6, { message: 'code must be 6 digits' }),
     newPassword: z.string().min(8, { message: 'password must have at least 8 characters' }),
   }),
 });

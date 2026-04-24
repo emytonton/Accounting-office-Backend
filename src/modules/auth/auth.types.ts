@@ -31,7 +31,8 @@ export interface LoginAttempt {
 export interface PasswordResetToken {
   id: string;
   userId: string;
-  token: string;
+  identifier: string;
+  code: string;
   expiresAt: Date;
   usedAt?: Date;
   isFirstAccess: boolean;

@@ -1,10 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { AuthService } from './auth.service';
-import { usersRepository } from '../../shared/repositories';
-import { emailService } from '../../shared/services/email.service';
+import { authService as service } from '../../shared/repositories';
 import { successResponse } from '../../shared/utils/response';
-
-const service = new AuthService(usersRepository, emailService);
 
 export async function login(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -32,7 +28,7 @@ export async function forgotPassword(
     await service.forgotPassword(req.body.email);
     res.json({
       success: true,
-      message: 'If your email is registered, you will receive a link shortly.',
+      message: 'If your email is registered, you will receive a verification code shortly.',
     });
   } catch (err) {
     next(err);
@@ -45,7 +41,7 @@ export async function validateResetToken(
   next: NextFunction,
 ): Promise<void> {
   try {
-    const result = await service.validateResetToken(req.params.token);
+    const result = await service.validateResetToken(req.body.identifier, req.body.code);
     successResponse(res, result);
   } catch (err) {
     next(err);
@@ -58,7 +54,7 @@ export async function resetPassword(
   next: NextFunction,
 ): Promise<void> {
   try {
-    await service.resetPassword(req.body.token, req.body.newPassword);
+    await service.resetPassword(req.body.identifier, req.body.code, req.body.newPassword);
     res.json({ success: true, message: 'Password updated successfully. Please log in.' });
   } catch (err) {
     next(err);

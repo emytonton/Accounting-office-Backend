@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { randomBytes, randomUUID } from 'crypto';
+import { randomInt, randomUUID } from 'crypto';
 import { IUsersRepository } from '../users/users.repository';
 import { IEmailService } from '../../shared/services/email.service';
 import {
@@ -79,37 +79,55 @@ export class AuthService {
 
     if (user) {
       const isFirstAccess = !user.passwordHash;
-      const token = randomBytes(32).toString('hex');
+      const code = String(randomInt(100000, 1000000));
 
-      this.resetTokens.set(token, {
+      this.resetTokens.set(email, {
         id: randomUUID(),
         userId: user.id,
-        token,
+        identifier: email,
+        code,
         expiresAt: new Date(Date.now() + RESET_TOKEN_EXPIRY_MS),
         isFirstAccess,
       });
 
-      await this.emailService.sendPasswordResetLink(email, token, isFirstAccess);
+      try {
+        await this.emailService.sendVerificationCode(email, code, isFirstAccess);
+      } catch (emailErr) {
+        console.error('[EMAIL] Failed to send verification code:', emailErr);
+      }
     }
 
     // No error thrown whether email exists or not — never confirm existence
   }
 
-  async validateResetToken(token: string): Promise<{ isFirstAccess: boolean }> {
-    const resetToken = this.resetTokens.get(token);
+  async validateResetToken(
+    identifier: string,
+    code: string,
+  ): Promise<{ isFirstAccess: boolean }> {
+    const resetToken = this.resetTokens.get(identifier);
 
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
-      throw new AppError('Invalid or expired link', 400, 'INVALID_RESET_TOKEN');
+    if (
+      !resetToken ||
+      resetToken.code !== code ||
+      resetToken.usedAt ||
+      resetToken.expiresAt < new Date()
+    ) {
+      throw new AppError('Invalid or expired code', 400, 'INVALID_RESET_TOKEN');
     }
 
     return { isFirstAccess: resetToken.isFirstAccess };
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
-    const resetToken = this.resetTokens.get(token);
+  async resetPassword(identifier: string, code: string, newPassword: string): Promise<void> {
+    const resetToken = this.resetTokens.get(identifier);
 
-    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
-      throw new AppError('Invalid or expired link', 400, 'INVALID_RESET_TOKEN');
+    if (
+      !resetToken ||
+      resetToken.code !== code ||
+      resetToken.usedAt ||
+      resetToken.expiresAt < new Date()
+    ) {
+      throw new AppError('Invalid or expired code', 400, 'INVALID_RESET_TOKEN');
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
