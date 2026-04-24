@@ -12,6 +12,7 @@ import {
 } from './auth.types';
 import { AppError } from '../../shared/errors/AppError';
 import { env } from '../../config/env';
+import { tokenBlacklist } from '../../shared/services/token-blacklist';
 
 const MAX_ATTEMPTS = 5;
 const BLOCK_DURATION_MS = 15 * 60 * 1000;
@@ -72,6 +73,12 @@ export class AuthService {
         tenantId: user.tenantId,
       },
     };
+  }
+
+  async logout(token: string): Promise<void> {
+    const decoded = jwt.decode(token) as { exp?: number } | null;
+    const expiresAt = decoded?.exp ? decoded.exp * 1000 : Date.now() + 30 * 60 * 1000;
+    tokenBlacklist.add(token, expiresAt);
   }
 
   async forgotPassword(email: string): Promise<void> {
