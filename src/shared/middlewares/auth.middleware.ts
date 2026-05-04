@@ -4,6 +4,7 @@ import { AppError } from '../errors/AppError';
 import { env } from '../../config/env';
 import { AuthTokenPayload } from '../../modules/auth/auth.types';
 import { tokenBlacklist } from '../services/token-blacklist';
+import { userSessionInvalidator } from '../services/user-session-invalidator';
 
 const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
 
@@ -23,6 +24,11 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   try {
     const payload = jwt.verify(token, env.JWT_SECRET || 'dev_secret') as AuthTokenPayload &
       jwt.JwtPayload;
+
+    if (userSessionInvalidator.isTokenInvalidated(payload.userId, payload.iat)) {
+      return next(new AppError('Session has been invalidated', 401, 'SESSION_INVALIDATED'));
+    }
+
     req.user = {
       id: payload.userId,
       tenantId: payload.tenantId,
