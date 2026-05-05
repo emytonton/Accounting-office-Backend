@@ -7,6 +7,11 @@ export interface IUsersRepository {
   findByIdentifier(tenantId: string, identifier: string): Promise<User | null>;
   findByIdentifierGlobally(identifier: string): Promise<User | null>;
   create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User>;
+  update(
+    tenantId: string,
+    id: string,
+    data: Partial<Omit<User, 'id' | 'tenantId' | 'passwordHash' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<User | null>;
   updatePassword(userId: string, passwordHash: string): Promise<void>;
 }
 
@@ -33,6 +38,22 @@ export class InMemoryUsersRepository implements IUsersRepository {
     const now = new Date();
     const user: User = { ...data, id: randomUUID(), createdAt: now, updatedAt: now };
     this.users.push(user);
+    return user;
+  }
+
+  async update(
+    tenantId: string,
+    id: string,
+    data: Partial<Omit<User, 'id' | 'tenantId' | 'passwordHash' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<User | null> {
+    const user = this.users.find((u) => u.tenantId === tenantId && u.id === id);
+    if (!user) return null;
+    if (data.name !== undefined) user.name = data.name;
+    if (data.identifier !== undefined) user.identifier = data.identifier;
+    if (data.role !== undefined) user.role = data.role;
+    if (data.sector !== undefined) user.sector = data.sector;
+    if (data.isActive !== undefined) user.isActive = data.isActive;
+    user.updatedAt = new Date();
     return user;
   }
 
