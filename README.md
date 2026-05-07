@@ -6,7 +6,7 @@ Sistema de gestão para escritórios contábeis.
 
 - Node.js >= 18
 - npm >= 9
-- PostgreSQL (para execução completa; não necessário para iniciar o projeto)
+- Docker e Docker Compose (para o banco de dados PostgreSQL)
 
 ## Instalação
 
@@ -22,7 +22,53 @@ Copie o arquivo de exemplo de variáveis de ambiente e ajuste os valores:
 cp .env.example .env
 ```
 
-Edite `.env` com suas configurações locais antes de iniciar.
+Edite `.env` com suas configurações locais. O campo mais importante é a `DATABASE_URL`:
+
+```env
+DATABASE_URL=postgresql://<usuario>:<senha>@localhost:5432/accounting_hub
+```
+
+## Banco de dados
+
+O projeto usa **PostgreSQL** via Docker. Para subir o banco:
+
+```bash
+docker compose up -d
+```
+
+Na primeira execução (ou após alterações no schema), rode a migration:
+
+```bash
+npx prisma migrate dev
+```
+
+Para visualizar os dados pelo navegador:
+
+```bash
+npx prisma studio
+```
+
+> Prisma Studio abre em `http://localhost:5555`
+
+### Fluxo completo de setup
+
+```bash
+# 1. Instalar dependências
+npm install
+
+# 2. Configurar variáveis de ambiente
+cp .env.example .env
+# edite .env com suas credenciais
+
+# 3. Subir o banco de dados
+docker compose up -d
+
+# 4. Aplicar as migrations
+npx prisma migrate dev
+
+# 5. Iniciar o servidor
+npm run dev
+```
 
 ## Scripts
 
