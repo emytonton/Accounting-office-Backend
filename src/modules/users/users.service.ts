@@ -12,8 +12,8 @@ function toPublic(user: User): PublicUser {
 export class UsersService {
   constructor(private readonly repository: IUsersRepository) {}
 
-  async findAll(tenantId: string): Promise<PublicUser[]> {
-    const users = await this.repository.findAll(tenantId);
+  async findAll(tenantId: string, includeInactive = false): Promise<PublicUser[]> {
+    const users = await this.repository.findAll(tenantId, includeInactive);
     return users.map(toPublic);
   }
 

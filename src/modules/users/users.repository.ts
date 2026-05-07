@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { User } from './users.types';
 
 export interface IUsersRepository {
-  findAll(tenantId: string): Promise<User[]>;
+  findAll(tenantId: string, includeInactive?: boolean): Promise<User[]>;
   findById(tenantId: string, id: string): Promise<User | null>;
   findByIdentifier(tenantId: string, identifier: string): Promise<User | null>;
   findByIdentifierGlobally(identifier: string): Promise<User | null>;
@@ -18,8 +18,10 @@ export interface IUsersRepository {
 export class InMemoryUsersRepository implements IUsersRepository {
   private readonly users: User[] = [];
 
-  async findAll(tenantId: string): Promise<User[]> {
-    return this.users.filter((u) => u.tenantId === tenantId && u.isActive);
+  async findAll(tenantId: string, includeInactive = false): Promise<User[]> {
+    return this.users.filter(
+      (u) => u.tenantId === tenantId && (includeInactive || u.isActive),
+    );
   }
 
   async findById(tenantId: string, id: string): Promise<User | null> {

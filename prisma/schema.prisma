@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  collaborator
+}
+
+enum DemandStatus {
+  pending
+  in_progress
+  completed
+  overdue
+}
+
+enum ReceiptStatus {
+  active
+  cancelled
+}
+
+enum PaymentMethod {
+  cash
+  bank_transfer
+  pix
+  credit_card
+  other
+}
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  identifier   String
+  passwordHash String?
+  role         UserRole
+  sector       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, identifier])
+  @@map("users")
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  document  String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tenants")
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  cnpj      String
+  sector    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, cnpj])
+  @@map("companies")
+}
+
+model DemandType {
+  id          String  @id @default(uuid())
+  tenantId    String
+  sector      String
+  name        String
+  hasSubtasks Boolean @default(false)
+  isActive    Boolean @default(true)
+
+  @@map("demand_types")
+}
+
+model Demand {
+  id               String       @id @default(uuid())
+  tenantId         String
+  companyId        String
+  demandTypeId     String
+  competenceMonth  Int
+  competenceYear   Int
+  status           DemandStatus @default(pending)
+  dueDate          DateTime?
+  completedAt      DateTime?
+
+  @@map("demands")
+}
+
+model Receipt {
+  id               String        @id @default(uuid())
+  tenantId         String
+  companyId        String
+  number           Int
+  year             Int
+  competenceMonth  Int
+  competenceYear   Int
+  amount           Decimal       @db.Decimal(15, 2)
+  status           ReceiptStatus @default(active)
+  cancelReason     String?
+  originalReceiptId String?
+  createdAt        DateTime      @default(now())
+
+  @@map("receipts")
+}
+
+model Payment {
+  id                String        @id @default(uuid())
+  tenantId          String
+  receiptId         String
+  paymentDate       DateTime
+  amount            Decimal       @db.Decimal(15, 2)
+  method            PaymentMethod
+  methodDescription String?
+  createdAt         DateTime      @default(now())
+
+  @@map("payments")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
