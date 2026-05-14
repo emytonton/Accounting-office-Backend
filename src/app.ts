@@ -12,6 +12,7 @@ import { demandsRoutes } from './modules/demands/demands.routes';
 import { receiptsRoutes } from './modules/receipts/receipts.routes';
 import { paymentsRoutes } from './modules/payments/payments.routes';
 import { auditRoutes } from './modules/audit/audit.routes';
+import { linksRoutes } from './modules/company-demand-type-links/links.routes';
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
 app.use('/tenants', tenantsRoutes);
 app.use('/companies', companiesRoutes);
+app.use('/companies/:companyId/demand-type-links', linksRoutes);
 app.use('/demand-types', demandTypesRoutes);
 app.use('/demands', demandsRoutes);
 app.use('/receipts', receiptsRoutes);
