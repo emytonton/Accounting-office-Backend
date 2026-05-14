@@ -81,36 +81,89 @@ model DemandType {
   hasSubtasks Boolean @default(false)
   isActive    Boolean @default(true)
 
+  subtaskTemplates SubtaskTemplate[]
+
   @@map("demand_types")
 }
 
-model Demand {
-  id               String       @id @default(uuid())
-  tenantId         String
-  companyId        String
-  demandTypeId     String
-  competenceMonth  Int
-  competenceYear   Int
-  status           DemandStatus @default(pending)
-  dueDate          DateTime?
-  completedAt      DateTime?
+/// Templates de subtarefas associados a um tipo de demanda.
+/// Quando uma demanda é gerada, suas subtarefas são copiadas a partir desses templates.
+model SubtaskTemplate {
+  id           String  @id @default(uuid())
+  tenantId     String
+  demandTypeId String
+  name         String
+  isRequired   Boolean @default(true)
+  orderIndex   Int     @default(0)
 
+  demandType DemandType @relation(fields: [demandTypeId], references: [id], onDelete: Cascade)
+
+  @@map("subtask_templates")
+}
+
+/// Vínculo entre empresa e tipo de demanda (US-E02).
+/// Define quais tipos de demanda serão gerados para a empresa em cada competência.
+model CompanyDemandTypeLink {
+  id             String  @id @default(uuid())
+  tenantId       String
+  companyId      String
+  demandTypeId   String
+  subtasksEnabled Boolean @default(true)
+  isActive       Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([tenantId, companyId, demandTypeId])
+  @@map("company_demand_type_links")
+}
+
+model Demand {
+  id              String       @id @default(uuid())
+  tenantId        String
+  companyId       String
+  demandTypeId    String
+  competenceMonth Int
+  competenceYear  Int
+  status          DemandStatus @default(pending)
+  dueDate         DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  subtasks Subtask[]
+
+  @@unique([tenantId, companyId, demandTypeId, competenceMonth, competenceYear])
   @@map("demands")
 }
 
+/// Subtarefa concreta de uma demanda. Copiada do SubtaskTemplate na geração.
+model Subtask {
+  id          String    @id @default(uuid())
+  tenantId    String
+  demandId    String
+  name        String
+  isRequired  Boolean   @default(true)
+  orderIndex  Int       @default(0)
+  completedAt DateTime?
+
+  demand Demand @relation(fields: [demandId], references: [id], onDelete: Cascade)
+
+  @@map("subtasks")
+}
+
 model Receipt {
-  id               String        @id @default(uuid())
-  tenantId         String
-  companyId        String
-  number           Int
-  year             Int
-  competenceMonth  Int
-  competenceYear   Int
-  amount           Decimal       @db.Decimal(15, 2)
-  status           ReceiptStatus @default(active)
-  cancelReason     String?
+  id                String        @id @default(uuid())
+  tenantId          String
+  companyId         String
+  number            Int
+  year              Int
+  competenceMonth   Int
+  competenceYear    Int
+  amount            Decimal       @db.Decimal(15, 2)
+  status            ReceiptStatus @default(active)
+  cancelReason      String?
   originalReceiptId String?
-  createdAt        DateTime      @default(now())
+  createdAt         DateTime      @default(now())
 
   @@map("receipts")
 }
