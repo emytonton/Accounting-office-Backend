@@ -26,6 +26,12 @@ export interface IDemandsRepository {
     status: DemandStatus,
     completedAt: Date | null,
   ): Promise<Demand | null>;
+  /// US-D03: define ou remove (passando null) o prazo de uma demanda.
+  updateDueDate(
+    tenantId: string,
+    id: string,
+    dueDate: Date | null,
+  ): Promise<Demand | null>;
   findSubtaskById(tenantId: string, subtaskId: string): Promise<Subtask | null>;
   markSubtask(
     tenantId: string,
@@ -123,6 +129,18 @@ export class InMemoryDemandsRepository implements IDemandsRepository {
     if (!d) return null;
     d.status = status;
     d.completedAt = completedAt;
+    d.updatedAt = new Date();
+    return d;
+  }
+
+  async updateDueDate(
+    tenantId: string,
+    id: string,
+    dueDate: Date | null,
+  ): Promise<Demand | null> {
+    const d = this.demands.find((x) => x.tenantId === tenantId && x.id === id);
+    if (!d) return null;
+    d.dueDate = dueDate;
     d.updatedAt = new Date();
     return d;
   }
