@@ -35,3 +35,25 @@ export const setSubtaskCompletionSchema = z.object({
     completed: z.boolean(),
   }),
 });
+
+// US-D03: definicao/remocao de prazo de uma demanda.
+export const updateDueDateSchema = z.object({
+  params: z.object({ id: z.string().uuid() }),
+  body: z.object({
+    dueDate: z
+      .union([z.string().datetime(), z.null()])
+      .refine((v) => v === null || typeof v === 'string', {
+        message: 'dueDate must be an ISO datetime string or null',
+      }),
+  }),
+});
+
+// US-D04: painel consolidado por competencia.
+export const dashboardSchema = z.object({
+  query: z.object({
+    competenceMonth: z.coerce.number().int().min(1).max(12),
+    competenceYear: z.coerce.number().int().min(2000).max(9999),
+    sector: z.string().optional(),
+    companyId: z.string().uuid().optional(),
+  }),
+});
