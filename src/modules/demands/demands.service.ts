@@ -3,6 +3,10 @@ import { ICompaniesRepository } from '../companies/companies.repository';
 import { IDemandTypesRepository } from '../demand-types/demand-types.repository';
 import { ILinksRepository } from '../company-demand-type-links/links.repository';
 import {
+  DashboardBreakdown,
+  DashboardCount,
+  DashboardFilters,
+  DashboardResult,
   Demand,
   DemandStatus,
   ListDemandsFilters,
@@ -14,6 +18,45 @@ import { AppError } from '../../shared/errors/AppError';
 import { AuthenticatedUser } from '../../shared/types';
 
 const VALID_STATUSES: DemandStatus[] = ['pending', 'in_progress', 'completed', 'overdue'];
+
+/// Calcula on-the-fly se a demanda esta atrasada (US-D03 / RN-009).
+/// Nao altera o status persistido; apenas devolve uma flag para a UI/agregados.
+function computeOverdue(demand: Demand, now: Date = new Date()): boolean {
+  if (!demand.dueDate) return false;
+  if (demand.status === 'completed') return false;
+  return new Date(demand.dueDate).getTime() < now.getTime();
+}
+
+function withOverdueFlag(demand: Demand, now: Date = new Date()): Demand {
+  return { ...demand, isOverdue: computeOverdue(demand, now) };
+}
+
+function withOverdueFlags(demands: Demand[], now: Date = new Date()): Demand[] {
+  return demands.map((d) => withOverdueFlag(d, now));
+}
+
+function emptyCount(): DashboardCount {
+  return {
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    pending: 0,
+    overdue: 0,
+    completionRate: 0,
+  };
+}
+
+function accumulate(target: DashboardCount, demand: Demand): void {
+  target.total += 1;
+  if (demand.status === 'completed') target.completed += 1;
+  else if (demand.status === 'in_progress') target.inProgress += 1;
+  else target.pending += 1;
+  if (computeOverdue(demand)) target.overdue += 1;
+}
+
+function finalizeRate(c: DashboardCount): void {
+  c.completionRate = c.total === 0 ? 0 : Math.round((c.completed / c.total) * 10000) / 100;
+}
 
 export class DemandsService {
   constructor(
@@ -37,16 +80,17 @@ export class DemandsService {
       });
       const typeIds = new Set(types.map((t) => t.id));
       const all = await this.repository.findAll(filters);
-      return all.filter((d) => typeIds.has(d.demandTypeId));
+      return withOverdueFlags(all.filter((d) => typeIds.has(d.demandTypeId)));
     }
 
-    return this.repository.findAll(filters);
+    const all = await this.repository.findAll(filters);
+    return withOverdueFlags(all);
   }
 
   async findById(tenantId: string, id: string): Promise<Demand> {
     const d = await this.repository.findById(tenantId, id);
     if (!d) throw new AppError('Demand not found', 404, 'NOT_FOUND');
-    return d;
+    return withOverdueFlag(d);
   }
 
   /// US-D01: gera demandas para a competência (mês/ano).
@@ -232,5 +276,107 @@ export class DemandsService {
       completed ? new Date() : null,
     );
     return updated as Subtask;
+  }
+
+  /// US-D03: define ou remove o prazo de uma demanda. Respeita escopo de setor (RF-005).
+  async updateDueDate(
+    tenantId: string,
+    id: string,
+    dueDate: Date | null,
+    actor: AuthenticatedUser,
+  ): Promise<Demand> {
+    const demand = await this.repository.findById(tenantId, id);
+    if (!demand) throw new AppError('Demand not found', 404, 'NOT_FOUND');
+
+    if (actor.role === 'collaborator') {
+      const dt = await this.demandTypesRepository.findById(tenantId, demand.demandTypeId);
+      if (!dt || dt.sector !== actor.sector) {
+        throw new AppError(
+          'You can only update demands of your own sector',
+          403,
+          'FORBIDDEN_SECTOR',
+        );
+      }
+    }
+
+    const updated = await this.repository.updateDueDate(tenantId, id, dueDate);
+    return withOverdueFlag(updated as Demand);
+  }
+
+  /// US-D04: monta o painel consolidado com totais e percentuais
+  /// agrupados por setor e por empresa.
+  async getDashboard(filters: DashboardFilters): Promise<DashboardResult> {
+    const all = await this.repository.findAll({
+      tenantId: filters.tenantId,
+      competenceMonth: filters.competenceMonth,
+      competenceYear: filters.competenceYear,
+      companyId: filters.companyId,
+    });
+
+    // Cruza com demand_types para obter o setor (necessario p/ filtro e breakdown).
+    const types = await this.demandTypesRepository.findAll({ tenantId: filters.tenantId });
+    const typeById = new Map(types.map((t) => [t.id, t]));
+
+    let demands = all;
+    if (filters.sector) {
+      demands = demands.filter((d) => typeById.get(d.demandTypeId)?.sector === filters.sector);
+    }
+
+    if (demands.length === 0) {
+      return {
+        competence: { month: filters.competenceMonth, year: filters.competenceYear },
+        overall: emptyCount(),
+        bySector: [],
+        byCompany: [],
+        isEmpty: true,
+        message: 'No data available for the selected competence',
+      };
+    }
+
+    // Carrega empresas referenciadas para enriquecer labels do breakdown.
+    const companyIds = Array.from(new Set(demands.map((d) => d.companyId)));
+    const companyLabel = new Map<string, string>();
+    for (const cid of companyIds) {
+      const c = await this.companiesRepository.findById(filters.tenantId, cid);
+      if (c) companyLabel.set(cid, c.name);
+    }
+
+    const overall: DashboardCount = emptyCount();
+    const sectorMap = new Map<string, DashboardCount>();
+    const companyMap = new Map<string, DashboardCount>();
+
+    for (const d of demands) {
+      accumulate(overall, d);
+
+      const sector = typeById.get(d.demandTypeId)?.sector ?? 'unknown';
+      if (!sectorMap.has(sector)) sectorMap.set(sector, emptyCount());
+      accumulate(sectorMap.get(sector)!, d);
+
+      if (!companyMap.has(d.companyId)) companyMap.set(d.companyId, emptyCount());
+      accumulate(companyMap.get(d.companyId)!, d);
+    }
+
+    finalizeRate(overall);
+    const bySector: DashboardBreakdown[] = [];
+    for (const [key, counts] of sectorMap.entries()) {
+      finalizeRate(counts);
+      bySector.push({ key, label: key, counts });
+    }
+    const byCompany: DashboardBreakdown[] = [];
+    for (const [key, counts] of companyMap.entries()) {
+      finalizeRate(counts);
+      byCompany.push({ key, label: companyLabel.get(key), counts });
+    }
+
+    bySector.sort((a, b) => a.key.localeCompare(b.key));
+    byCompany.sort((a, b) => (a.label ?? a.key).localeCompare(b.label ?? b.key));
+
+    return {
+      competence: { month: filters.competenceMonth, year: filters.competenceYear },
+      overall,
+      bySector,
+      byCompany,
+      isEmpty: false,
+    };
   }
 }
