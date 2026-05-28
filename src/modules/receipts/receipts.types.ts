@@ -10,9 +10,29 @@ export interface Receipt {
   competenceYear: number;
   amount: number;
   status: ReceiptStatus;
-  cancelReason?: string;
-  originalReceiptId?: string;
+  cancelReason?: string | null;
+  originalReceiptId?: string | null;
   createdAt: Date;
 }
 
-export type CreateReceiptDto = Omit<Receipt, 'id' | 'number' | 'status' | 'createdAt'>;
+export interface CreateReceiptDto {
+  tenantId: string;
+  companyId: string;
+  competenceMonth: number;
+  competenceYear: number;
+  amount: number;
+}
+
+export interface CancelReceiptDto {
+  reason: string;
+  force?: boolean;
+}
+
+export interface ListReceiptsFilters {
+  tenantId: string;
+  companyId?: string;
+  year?: number;
+  status?: ReceiptStatus;
+  competenceMonth?: number;
+  competenceYear?: number;
+}
