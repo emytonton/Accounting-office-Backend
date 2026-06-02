@@ -16,6 +16,10 @@ import {
   InMemoryAuditRepository,
   PrismaAuditRepository,
 } from '../../modules/audit/audit.repository';
+import { InMemoryReceiptsRepository } from '../../modules/receipts/receipts.repository';
+import { PrismaReceiptsRepository } from '../../modules/receipts/receipts.prisma-repository';
+import { InMemoryPaymentsRepository } from '../../modules/payments/payments.repository';
+import { PrismaPaymentsRepository } from '../../modules/payments/payments.prisma-repository';
 import { AuthService } from '../../modules/auth/auth.service';
 import { emailService } from '../services/email.service';
 import { env } from '../../config/env';
@@ -38,4 +42,10 @@ export const linksRepository = isTest
 export const auditRepository = isTest
   ? new InMemoryAuditRepository()
   : new PrismaAuditRepository();
+export const receiptsRepository = isTest
+  ? new InMemoryReceiptsRepository()
+  : new PrismaReceiptsRepository();
+export const paymentsRepository = isTest
+  ? new InMemoryPaymentsRepository()
+  : new PrismaPaymentsRepository();
 export const authService = new AuthService(usersRepository, emailService);
