@@ -1,0 +1,460 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-05-07T22:30:00.000Z",
+  "__export_source": "insomnia.desktop.app:v8.0.0",
+  "resources": [
+    {
+      "_id": "wrk_accounting_hub",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Accounting Hub Backend",
+      "description": "API completa - auth, users, companies, demand-types, demands, links, audit",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_accounting_hub",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3000",
+        "tenant_id": "123e4567-e89b-12d3-a456-426614174000",
+        "token": "",
+        "user_id": "",
+        "company_id": "",
+        "demand_type_id": "",
+        "link_id": "",
+        "demand_id": "",
+        "subtask_id": "",
+        "receipt_id": "",
+        "identifier": "admin.test",
+        "password": "senha1234",
+        "email": "admin.test@example.com"
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1
+    },
+
+    { "_id": "fld_health", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Health", "metaSortKey": -100 },
+    { "_id": "req_health", "_type": "request", "parentId": "fld_health", "name": "GET /health", "method": "GET", "url": "{{ _.base_url }}/health", "body": {}, "headers": [], "metaSortKey": -100 },
+
+    { "_id": "fld_auth", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Auth", "metaSortKey": -95 },
+    {
+      "_id": "req_auth_login", "_type": "request", "parentId": "fld_auth",
+      "name": "POST /auth/login", "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "body": { "mimeType": "application/json", "text": "{\n  \"identifier\": \"{{ _.identifier }}\",\n  \"password\": \"{{ _.password }}\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "metaSortKey": -100
+    },
+    {
+      "_id": "req_auth_logout", "_type": "request", "parentId": "fld_auth",
+      "name": "POST /auth/logout", "method": "POST",
+      "url": "{{ _.base_url }}/auth/logout",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_auth_forgot", "_type": "request", "parentId": "fld_auth",
+      "name": "POST /auth/forgot-password", "method": "POST",
+      "url": "{{ _.base_url }}/auth/forgot-password",
+      "body": { "mimeType": "application/json", "text": "{\n  \"email\": \"{{ _.email }}\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_auth_reset_validate", "_type": "request", "parentId": "fld_auth",
+      "name": "POST /auth/reset-password/validate", "method": "POST",
+      "url": "{{ _.base_url }}/auth/reset-password/validate",
+      "body": { "mimeType": "application/json", "text": "{\n  \"identifier\": \"{{ _.email }}\",\n  \"code\": \"123456\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_auth_reset", "_type": "request", "parentId": "fld_auth",
+      "name": "POST /auth/reset-password", "method": "POST",
+      "url": "{{ _.base_url }}/auth/reset-password",
+      "body": { "mimeType": "application/json", "text": "{\n  \"identifier\": \"{{ _.email }}\",\n  \"code\": \"123456\",\n  \"newPassword\": \"novaSenha123\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "metaSortKey": -60
+    },
+
+    { "_id": "fld_users", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Users", "metaSortKey": -90 },
+    {
+      "_id": "req_users_list", "_type": "request", "parentId": "fld_users",
+      "name": "GET /users", "method": "GET",
+      "url": "{{ _.base_url }}/users",
+      "parameters": [
+        { "name": "tenantId", "value": "{{ _.tenant_id }}" },
+        { "name": "includeInactive", "value": "true", "disabled": true }
+      ],
+      "headers": [], "body": {}, "metaSortKey": -100
+    },
+    {
+      "_id": "req_users_create", "_type": "request", "parentId": "fld_users",
+      "name": "POST /users", "method": "POST",
+      "url": "{{ _.base_url }}/users",
+      "body": { "mimeType": "application/json", "text": "{\n  \"tenantId\": \"{{ _.tenant_id }}\",\n  \"name\": \"Admin Teste\",\n  \"identifier\": \"admin.test\",\n  \"password\": \"senha1234\",\n  \"role\": \"admin\",\n  \"sector\": \"fiscal\"\n}" },
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_users_update", "_type": "request", "parentId": "fld_users",
+      "name": "PUT /users/:id", "method": "PUT",
+      "url": "{{ _.base_url }}/users/{{ _.user_id }}",
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Nome Atualizado\",\n  \"sector\": \"contabil\",\n  \"role\": \"collaborator\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_users_inactivate", "_type": "request", "parentId": "fld_users",
+      "name": "PATCH /users/:id/inactivate", "method": "PATCH",
+      "url": "{{ _.base_url }}/users/{{ _.user_id }}/inactivate",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -70
+    },
+    {
+      "_id": "req_users_reactivate", "_type": "request", "parentId": "fld_users",
+      "name": "PATCH /users/:id/reactivate", "method": "PATCH",
+      "url": "{{ _.base_url }}/users/{{ _.user_id }}/reactivate",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -60
+    },
+
+    { "_id": "fld_companies", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Companies", "metaSortKey": -85 },
+    {
+      "_id": "req_companies_list", "_type": "request", "parentId": "fld_companies",
+      "name": "GET /companies", "method": "GET",
+      "url": "{{ _.base_url }}/companies",
+      "parameters": [
+        { "name": "tenantId", "value": "{{ _.tenant_id }}" },
+        { "name": "name", "value": "", "disabled": true },
+        { "name": "cnpj", "value": "", "disabled": true },
+        { "name": "situation", "value": "active", "disabled": true },
+        { "name": "page", "value": "1", "disabled": true },
+        { "name": "limit", "value": "20", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -100
+    },
+    {
+      "_id": "req_companies_create", "_type": "request", "parentId": "fld_companies",
+      "name": "POST /companies", "method": "POST",
+      "url": "{{ _.base_url }}/companies",
+      "body": { "mimeType": "application/json", "text": "{\n  \"tenantId\": \"{{ _.tenant_id }}\",\n  \"name\": \"Empresa Exemplo LTDA\",\n  \"cnpj\": \"12.345.678/0001-95\",\n  \"sector\": \"fiscal\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_companies_update", "_type": "request", "parentId": "fld_companies",
+      "name": "PUT /companies/:id", "method": "PUT",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}",
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Empresa Renomeada LTDA\",\n  \"sector\": \"contabil\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_companies_inactivate", "_type": "request", "parentId": "fld_companies",
+      "name": "PATCH /companies/:id/inactivate", "method": "PATCH",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}/inactivate",
+      "body": { "mimeType": "application/json", "text": "{\n  \"force\": false\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -70
+    },
+
+    { "_id": "fld_demand_types", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Demand Types", "metaSortKey": -80 },
+    {
+      "_id": "req_dt_list", "_type": "request", "parentId": "fld_demand_types",
+      "name": "GET /demand-types", "method": "GET",
+      "url": "{{ _.base_url }}/demand-types",
+      "parameters": [
+        { "name": "sector", "value": "fiscal", "disabled": true },
+        { "name": "isActive", "value": "true", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -100
+    },
+    {
+      "_id": "req_dt_get", "_type": "request", "parentId": "fld_demand_types",
+      "name": "GET /demand-types/:id", "method": "GET",
+      "url": "{{ _.base_url }}/demand-types/{{ _.demand_type_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -95
+    },
+    {
+      "_id": "req_dt_create", "_type": "request", "parentId": "fld_demand_types",
+      "name": "POST /demand-types", "method": "POST",
+      "url": "{{ _.base_url }}/demand-types",
+      "body": { "mimeType": "application/json", "text": "{\n  \"sector\": \"fiscal\",\n  \"name\": \"Apuração de ICMS\",\n  \"hasSubtasks\": true,\n  \"subtaskTemplates\": [\n    { \"name\": \"Importar XMLs do mês\", \"isRequired\": true, \"orderIndex\": 0 },\n    { \"name\": \"Conferir totalizações\", \"isRequired\": true, \"orderIndex\": 1 },\n    { \"name\": \"Gerar SPED Fiscal\", \"isRequired\": false, \"orderIndex\": 2 }\n  ]\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_dt_update", "_type": "request", "parentId": "fld_demand_types",
+      "name": "PUT /demand-types/:id", "method": "PUT",
+      "url": "{{ _.base_url }}/demand-types/{{ _.demand_type_id }}",
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Apuração de ICMS (revisada)\",\n  \"isActive\": true\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_dt_add_subtask", "_type": "request", "parentId": "fld_demand_types",
+      "name": "POST /demand-types/:id/subtask-templates", "method": "POST",
+      "url": "{{ _.base_url }}/demand-types/{{ _.demand_type_id }}/subtask-templates",
+      "body": { "mimeType": "application/json", "text": "{\n  \"name\": \"Nova subtarefa\",\n  \"isRequired\": true,\n  \"orderIndex\": 3\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_dt_remove_subtask", "_type": "request", "parentId": "fld_demand_types",
+      "name": "DELETE /demand-types/:id/subtask-templates/:templateId", "method": "DELETE",
+      "url": "{{ _.base_url }}/demand-types/{{ _.demand_type_id }}/subtask-templates/TEMPLATE_ID_AQUI",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -60
+    },
+
+    { "_id": "fld_links", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Company ↔ Demand Type Links (US-E02)", "metaSortKey": -75 },
+    {
+      "_id": "req_link_catalog", "_type": "request", "parentId": "fld_links",
+      "name": "GET /companies/:companyId/demand-type-links/catalog", "method": "GET",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}/demand-type-links/catalog",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -100
+    },
+    {
+      "_id": "req_link_list", "_type": "request", "parentId": "fld_links",
+      "name": "GET /companies/:companyId/demand-type-links", "method": "GET",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}/demand-type-links",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -90
+    },
+    {
+      "_id": "req_link_create", "_type": "request", "parentId": "fld_links",
+      "name": "POST /companies/:companyId/demand-type-links", "method": "POST",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}/demand-type-links",
+      "body": { "mimeType": "application/json", "text": "{\n  \"demandTypeId\": \"{{ _.demand_type_id }}\",\n  \"subtasksEnabled\": true\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_link_update", "_type": "request", "parentId": "fld_links",
+      "name": "PATCH /companies/:companyId/demand-type-links/:linkId", "method": "PATCH",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}/demand-type-links/{{ _.link_id }}",
+      "body": { "mimeType": "application/json", "text": "{\n  \"subtasksEnabled\": false\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_link_delete", "_type": "request", "parentId": "fld_links",
+      "name": "DELETE /companies/:companyId/demand-type-links/:linkId", "method": "DELETE",
+      "url": "{{ _.base_url }}/companies/{{ _.company_id }}/demand-type-links/{{ _.link_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -60
+    },
+
+    { "_id": "fld_demands", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Demands (US-D01 / US-D02 / US-D03 / US-D04)", "metaSortKey": -70 },
+    {
+      "_id": "req_demands_open", "_type": "request", "parentId": "fld_demands",
+      "name": "POST /demands/open-competence (US-D01)", "method": "POST",
+      "url": "{{ _.base_url }}/demands/open-competence",
+      "body": { "mimeType": "application/json", "text": "{\n  \"competenceMonth\": 5,\n  \"competenceYear\": 2026,\n  \"dueDate\": \"2026-06-20T23:59:59.000Z\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -100
+    },
+    {
+      "_id": "req_demands_list", "_type": "request", "parentId": "fld_demands",
+      "name": "GET /demands", "method": "GET",
+      "url": "{{ _.base_url }}/demands",
+      "parameters": [
+        { "name": "companyId", "value": "{{ _.company_id }}", "disabled": true },
+        { "name": "demandTypeId", "value": "{{ _.demand_type_id }}", "disabled": true },
+        { "name": "status", "value": "pending", "disabled": true },
+        { "name": "competenceMonth", "value": "5", "disabled": true },
+        { "name": "competenceYear", "value": "2026", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -90
+    },
+    {
+      "_id": "req_demands_get", "_type": "request", "parentId": "fld_demands",
+      "name": "GET /demands/:id", "method": "GET",
+      "url": "{{ _.base_url }}/demands/{{ _.demand_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -80
+    },
+    {
+      "_id": "req_demands_status", "_type": "request", "parentId": "fld_demands",
+      "name": "PATCH /demands/:id/status (US-D02)", "method": "PATCH",
+      "url": "{{ _.base_url }}/demands/{{ _.demand_id }}/status",
+      "body": { "mimeType": "application/json", "text": "{\n  \"status\": \"in_progress\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_demands_subtask", "_type": "request", "parentId": "fld_demands",
+      "name": "PATCH /demands/:id/subtasks/:subtaskId", "method": "PATCH",
+      "url": "{{ _.base_url }}/demands/{{ _.demand_id }}/subtasks/{{ _.subtask_id }}",
+      "body": { "mimeType": "application/json", "text": "{\n  \"completed\": true\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -60
+    },
+    {
+      "_id": "req_demands_due_date", "_type": "request", "parentId": "fld_demands",
+      "name": "PATCH /demands/:id/due-date (US-D03)", "method": "PATCH",
+      "url": "{{ _.base_url }}/demands/{{ _.demand_id }}/due-date",
+      "body": { "mimeType": "application/json", "text": "{\n  \"dueDate\": \"2026-06-30T23:59:59.000Z\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -55
+    },
+    {
+      "_id": "req_demands_due_date_remove", "_type": "request", "parentId": "fld_demands",
+      "name": "PATCH /demands/:id/due-date — remover prazo (US-D03)", "method": "PATCH",
+      "url": "{{ _.base_url }}/demands/{{ _.demand_id }}/due-date",
+      "body": { "mimeType": "application/json", "text": "{\n  \"dueDate\": null\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -50
+    },
+    {
+      "_id": "req_demands_dashboard", "_type": "request", "parentId": "fld_demands",
+      "name": "GET /demands/dashboard (US-D04)", "method": "GET",
+      "url": "{{ _.base_url }}/demands/dashboard",
+      "parameters": [
+        { "name": "competenceMonth", "value": "5" },
+        { "name": "competenceYear", "value": "2026" },
+        { "name": "sector", "value": "fiscal", "disabled": true },
+        { "name": "companyId", "value": "{{ _.company_id }}", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -45
+    },
+
+    { "_id": "fld_receipts", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Receipts — Honorários (US-H01 / US-H02)", "metaSortKey": -65 },
+    {
+      "_id": "req_receipts_list", "_type": "request", "parentId": "fld_receipts",
+      "name": "GET /receipts", "method": "GET",
+      "url": "{{ _.base_url }}/receipts",
+      "parameters": [
+        { "name": "companyId", "value": "{{ _.company_id }}", "disabled": true },
+        { "name": "year", "value": "2026", "disabled": true },
+        { "name": "status", "value": "active", "disabled": true },
+        { "name": "competenceMonth", "value": "5", "disabled": true },
+        { "name": "competenceYear", "value": "2026", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -100
+    },
+    {
+      "_id": "req_receipts_get", "_type": "request", "parentId": "fld_receipts",
+      "name": "GET /receipts/:id", "method": "GET",
+      "url": "{{ _.base_url }}/receipts/{{ _.receipt_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -90
+    },
+    {
+      "_id": "req_receipts_create", "_type": "request", "parentId": "fld_receipts",
+      "name": "POST /receipts — Emitir recibo (US-H01)", "method": "POST",
+      "url": "{{ _.base_url }}/receipts",
+      "body": { "mimeType": "application/json", "text": "{\n  \"companyId\": \"{{ _.company_id }}\",\n  \"competenceMonth\": 5,\n  \"competenceYear\": 2026,\n  \"amount\": 1500.00\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_receipts_cancel", "_type": "request", "parentId": "fld_receipts",
+      "name": "PATCH /receipts/:id/cancel (US-H02)", "method": "PATCH",
+      "url": "{{ _.base_url }}/receipts/{{ _.receipt_id }}/cancel",
+      "body": { "mimeType": "application/json", "text": "{\n  \"reason\": \"Valor incorreto informado\",\n  \"force\": false\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_receipts_cancel_force", "_type": "request", "parentId": "fld_receipts",
+      "name": "PATCH /receipts/:id/cancel — forçar com pagamentos (US-H02)", "method": "PATCH",
+      "url": "{{ _.base_url }}/receipts/{{ _.receipt_id }}/cancel",
+      "body": { "mimeType": "application/json", "text": "{\n  \"reason\": \"Cancelamento forçado — há pagamentos vinculados\",\n  \"force\": true\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -60
+    },
+    {
+      "_id": "req_receipts_pdf", "_type": "request", "parentId": "fld_receipts",
+      "name": "GET /receipts/:id/pdf — 1ª via (US-H01)", "method": "GET",
+      "url": "{{ _.base_url }}/receipts/{{ _.receipt_id }}/pdf",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -50
+    },
+    {
+      "_id": "req_receipts_pdf_copy", "_type": "request", "parentId": "fld_receipts",
+      "name": "GET /receipts/:id/pdf?copy=true — 2ª via (US-H02)", "method": "GET",
+      "url": "{{ _.base_url }}/receipts/{{ _.receipt_id }}/pdf",
+      "parameters": [{ "name": "copy", "value": "true" }],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -40
+    },
+
+    { "_id": "fld_audit", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Audit Logs", "metaSortKey": -60 },
+    {
+      "_id": "req_audit_list", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs", "method": "GET",
+      "url": "{{ _.base_url }}/audit-logs",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -100
+    },
+
+    { "_id": "fld_other", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Outros (placeholders)", "metaSortKey": -50 },
+    { "_id": "req_tenants", "_type": "request", "parentId": "fld_other", "name": "GET /tenants", "method": "GET", "url": "{{ _.base_url }}/tenants", "body": {}, "headers": [], "metaSortKey": -100 },
+    { "_id": "req_payments_placeholder", "_type": "request", "parentId": "fld_other", "name": "GET /payments (placeholder — módulo não implementado)", "method": "GET", "url": "{{ _.base_url }}/payments", "body": {}, "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }], "metaSortKey": -80 }
+  ]
+}
