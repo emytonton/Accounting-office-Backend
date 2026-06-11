@@ -15,6 +15,7 @@ type RawReceipt = {
   status: string;
   cancelReason: string | null;
   originalReceiptId: string | null;
+  paidAt: Date | null;
   createdAt: Date;
 };
 
@@ -31,6 +32,7 @@ function toReceipt(record: RawReceipt): Receipt {
     status: record.status as ReceiptStatus,
     cancelReason: record.cancelReason,
     originalReceiptId: record.originalReceiptId,
+    paidAt: record.paidAt,
     createdAt: record.createdAt,
   };
 }
@@ -116,6 +118,16 @@ export class PrismaReceiptsRepository implements IReceiptsRepository {
     const record = await prisma.receipt.update({
       where: { id },
       data: { status: 'cancelled', cancelReason: reason },
+    });
+    return toReceipt(record);
+  }
+
+  async setPaidAt(tenantId: string, id: string, paidAt: Date): Promise<Receipt | null> {
+    const existing = await prisma.receipt.findFirst({ where: { tenantId, id } });
+    if (!existing) return null;
+    const record = await prisma.receipt.update({
+      where: { id },
+      data: { paidAt },
     });
     return toReceipt(record);
   }
