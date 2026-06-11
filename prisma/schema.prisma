@@ -163,6 +163,7 @@ model Receipt {
   status            ReceiptStatus @default(active)
   cancelReason      String?
   originalReceiptId String?
+  paidAt            DateTime?
   createdAt         DateTime      @default(now())
 
   @@unique([tenantId, year, number])

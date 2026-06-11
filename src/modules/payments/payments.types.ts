@@ -7,8 +7,29 @@ export interface Payment {
   paymentDate: Date;
   amount: number;
   method: PaymentMethod;
-  methodDescription?: string;
+  methodDescription?: string | null;
   createdAt: Date;
 }
 
-export type CreatePaymentDto = Omit<Payment, 'id' | 'createdAt'>;
+export interface CreatePaymentDto {
+  tenantId: string;
+  receiptId: string;
+  paymentDate: Date;
+  amount: number;
+  method: PaymentMethod;
+  methodDescription?: string | null;
+}
+
+export interface ListPaymentsFilters {
+  tenantId: string;
+  receiptId?: string;
+}
+
+export interface PaymentSummary {
+  receiptId: string;
+  receiptAmount: number;
+  totalPaid: number;
+  balance: number;
+  isFullyPaid: boolean;
+  payments: Payment[];
+}
