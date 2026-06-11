@@ -12,6 +12,7 @@ export interface Receipt {
   status: ReceiptStatus;
   cancelReason?: string | null;
   originalReceiptId?: string | null;
+  paidAt?: Date | null;
   createdAt: Date;
 }
 

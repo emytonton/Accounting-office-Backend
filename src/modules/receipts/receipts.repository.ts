@@ -4,14 +4,10 @@ import { ListReceiptsFilters, Receipt } from './receipts.types';
 export interface IReceiptsRepository {
   findAll(filters: ListReceiptsFilters): Promise<Receipt[]>;
   findById(tenantId: string, id: string): Promise<Receipt | null>;
-  /// Cria recibo com numeracao sequencial atomica por (tenant, ano civil).
-  /// Em caso de race condition na unique constraint, faz retry uma vez.
   create(data: Omit<Receipt, 'id' | 'number' | 'status' | 'createdAt'>): Promise<Receipt>;
-  cancel(
-    tenantId: string,
-    id: string,
-    reason: string,
-  ): Promise<Receipt | null>;
+  cancel(tenantId: string, id: string, reason: string): Promise<Receipt | null>;
+  /// US-H03b: marca o recibo como quitado ao atingir o valor total.
+  setPaidAt(tenantId: string, id: string, paidAt: Date): Promise<Receipt | null>;
 }
 
 export class InMemoryReceiptsRepository implements IReceiptsRepository {
@@ -52,17 +48,18 @@ export class InMemoryReceiptsRepository implements IReceiptsRepository {
     return receipt;
   }
 
-  async cancel(
-    tenantId: string,
-    id: string,
-    reason: string,
-  ): Promise<Receipt | null> {
-    const receipt = this.receipts.find(
-      (r) => r.tenantId === tenantId && r.id === id,
-    );
+  async cancel(tenantId: string, id: string, reason: string): Promise<Receipt | null> {
+    const receipt = this.receipts.find((r) => r.tenantId === tenantId && r.id === id);
     if (!receipt) return null;
     receipt.status = 'cancelled';
     receipt.cancelReason = reason;
+    return receipt;
+  }
+
+  async setPaidAt(tenantId: string, id: string, paidAt: Date): Promise<Receipt | null> {
+    const receipt = this.receipts.find((r) => r.tenantId === tenantId && r.id === id);
+    if (!receipt) return null;
+    receipt.paidAt = paidAt;
     return receipt;
   }
 }
