@@ -149,3 +149,62 @@ export async function setSubtaskCompletion(
     next(err);
   }
 }
+
+// US-D03: definir/remover prazo de uma demanda
+export async function updateDueDate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const user = requireUser(req);
+    const rawDueDate: string | null = req.body.dueDate;
+    const dueDate = rawDueDate ? new Date(rawDueDate) : null;
+
+    const previous = await service.findById(user.tenantId, req.params.id);
+    const updated = await service.updateDueDate(
+      user.tenantId,
+      req.params.id,
+      dueDate,
+      user,
+    );
+
+    await audit.log({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: 'demand.due_date_updated',
+      entity: 'demand',
+      entityId: updated.id,
+      metadata: {
+        from: previous.dueDate ? previous.dueDate.toString() : null,
+        to: dueDate ? dueDate.toISOString() : null,
+      },
+    });
+
+    successResponse(res, updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// US-D04: painel consolidado
+export async function dashboard(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const user = requireUser(req);
+    const q = req.query as Record<string, string | undefined>;
+    const result = await service.getDashboard({
+      tenantId: user.tenantId,
+      competenceMonth: Number(q.competenceMonth),
+      competenceYear: Number(q.competenceYear),
+      sector: q.sector,
+      companyId: q.companyId,
+    });
+    successResponse(res, result);
+  } catch (err) {
+    next(err);
+  }
+}

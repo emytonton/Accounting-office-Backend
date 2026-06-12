@@ -170,6 +170,21 @@ export class PrismaDemandsRepository implements IDemandsRepository {
     return toDemand(record, record.subtasks);
   }
 
+  async updateDueDate(
+    tenantId: string,
+    id: string,
+    dueDate: Date | null,
+  ): Promise<Demand | null> {
+    const existing = await prisma.demand.findFirst({ where: { tenantId, id } });
+    if (!existing) return null;
+    const record = await prisma.demand.update({
+      where: { id },
+      data: { dueDate },
+      include: { subtasks: { orderBy: { orderIndex: 'asc' } } },
+    });
+    return toDemand(record, record.subtasks);
+  }
+
   async findSubtaskById(tenantId: string, subtaskId: string): Promise<Subtask | null> {
     const record = await prisma.subtask.findFirst({ where: { tenantId, id: subtaskId } });
     return record ? toSubtask(record) : null;

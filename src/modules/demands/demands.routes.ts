@@ -5,6 +5,8 @@ import {
   openCompetence,
   updateStatus,
   setSubtaskCompletion,
+  updateDueDate,
+  dashboard,
 } from './demands.controller';
 import { authenticate } from '../../shared/middlewares/auth.middleware';
 import { authorize } from '../../shared/middlewares/authorization.middleware';
@@ -14,9 +16,20 @@ import {
   openCompetenceSchema,
   updateStatusSchema,
   setSubtaskCompletionSchema,
+  updateDueDateSchema,
+  dashboardSchema,
 } from './demands.schema';
 
 export const demandsRoutes = Router();
+
+// US-D04: painel consolidado (admin) — declarado antes de /:id para nao conflitar
+demandsRoutes.get(
+  '/dashboard',
+  authenticate,
+  authorize('admin'),
+  validate(dashboardSchema),
+  dashboard,
+);
 
 demandsRoutes.get('/', authenticate, validate(listDemandsSchema), findAll);
 demandsRoutes.get('/:id', authenticate, findById);
@@ -36,6 +49,14 @@ demandsRoutes.patch(
   authenticate,
   validate(updateStatusSchema),
   updateStatus,
+);
+
+// US-D03: definir/remover prazo
+demandsRoutes.patch(
+  '/:id/due-date',
+  authenticate,
+  validate(updateDueDateSchema),
+  updateDueDate,
 );
 
 // US-D02: marcar/desmarcar subtarefa
