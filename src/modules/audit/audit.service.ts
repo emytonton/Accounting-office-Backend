@@ -1,15 +1,15 @@
 import { IAuditRepository } from './audit.repository';
-import { AuditLog, CreateAuditLogDto } from './audit.types';
+import { AuditLog, CreateAuditLogDto, ListAuditFilters, PaginatedAuditLogs } from './audit.types';
 
 export class AuditService {
   constructor(private readonly repository: IAuditRepository) {}
 
-  async findAll(tenantId: string): Promise<AuditLog[]> {
-    return this.repository.findAll(tenantId);
+  async findAll(filters: ListAuditFilters): Promise<PaginatedAuditLogs> {
+    return this.repository.findAll(filters);
   }
 
-  /// Registra um evento de auditoria. Falhas no log são silenciadas para
-  /// não impactar a operação principal — auditoria é "best-effort".
+  /// Registra um evento de auditoria. Falhas no log sao silenciadas para
+  /// nao impactar a operacao principal — auditoria e "best-effort".
   async log(entry: CreateAuditLogDto): Promise<void> {
     try {
       await this.repository.create(entry);

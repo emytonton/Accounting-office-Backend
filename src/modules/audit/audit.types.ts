@@ -10,3 +10,22 @@ export interface AuditLog {
 }
 
 export type CreateAuditLogDto = Omit<AuditLog, 'id' | 'createdAt'>;
+
+export interface ListAuditFilters {
+  tenantId: string;
+  entity?: string;
+  action?: string;
+  userId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedAuditLogs {
+  data: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
