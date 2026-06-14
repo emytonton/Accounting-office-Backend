@@ -13,6 +13,7 @@ import { receiptsRoutes } from './modules/receipts/receipts.routes';
 import { paymentsRoutes } from './modules/payments/payments.routes';
 import { auditRoutes } from './modules/audit/audit.routes';
 import { linksRoutes } from './modules/company-demand-type-links/links.routes';
+import { exportsRoutes } from './modules/exports/exports.routes';
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use('/demands', demandsRoutes);
 app.use('/receipts', receiptsRoutes);
 app.use('/payments', paymentsRoutes);
 app.use('/audit-logs', auditRoutes);
+app.use('/export', exportsRoutes);
 
 app.use(errorHandler);
 
