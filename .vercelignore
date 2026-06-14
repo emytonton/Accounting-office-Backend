@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+docs
+*.log
+insomnia-export.json
+docker-compose.yml
+src/__tests__
