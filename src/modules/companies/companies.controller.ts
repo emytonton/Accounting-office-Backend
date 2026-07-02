@@ -16,14 +16,14 @@ function requireUser(req: Request) {
 export async function findAll(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const user = requireUser(req);
-    const { tenantId, name, cnpj, situation, page, limit } = req.query as Record<string, string>;
+    const { name, cnpj, situation, page, limit } = req.query as Record<string, string>;
 
     const isActive =
       situation === 'active' ? true : situation === 'inactive' ? false : undefined;
 
     const result = await service.findAll(
       {
-        tenantId,
+        tenantId: user.tenantId,
         name,
         cnpj,
         isActive,
