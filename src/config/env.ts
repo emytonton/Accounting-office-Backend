@@ -1,6 +1,10 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Vercel injects env vars directly into process.env — no .env file exists there.
+// Only load dotenv in local/test environments to avoid EnvFileReadError in serverless.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
