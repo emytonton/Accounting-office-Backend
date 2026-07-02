@@ -44,11 +44,11 @@ export const inactivateCompanySchema = z.object({
 
 export const listCompaniesSchema = z.object({
   query: z.object({
-    tenantId: z.string().uuid({ message: 'tenantId must be a valid UUID' }),
+    tenantId: z.string().uuid({ message: 'tenantId must be a valid UUID' }).optional(),
     name: z.string().optional(),
     cnpj: z.string().optional(),
     situation: z.enum(['active', 'inactive']).optional(),
     page: z.coerce.number().int().positive().optional(),
-    limit: z.coerce.number().int().positive().max(100).optional(),
+    limit: z.coerce.number().int().positive().max(1000).optional(),
   }),
 });
