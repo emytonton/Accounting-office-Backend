@@ -18,12 +18,20 @@ import { exportsRoutes } from './modules/exports/exports.routes';
 const app = express();
 
 app.use(helmet());
+// CORS_ORIGINS accepts comma-separated list; fallback to APP_URL or wildcard
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
+  : env.NODE_ENV === 'production'
+  ? [env.APP_URL, 'http://localhost:5173', 'http://localhost:3000']
+  : '*';
+
 app.use(
   cors({
-    origin: env.NODE_ENV === 'production' ? env.APP_URL : '*',
+    origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['X-Refresh-Token'],
+    credentials: true,
   }),
 );
 app.use(express.json());
