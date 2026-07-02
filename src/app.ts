@@ -18,11 +18,16 @@ import { exportsRoutes } from './modules/exports/exports.routes';
 const app = express();
 
 app.use(helmet());
-// CORS_ORIGINS accepts comma-separated list; fallback to APP_URL or wildcard
+// CORS_ORIGINS accepts comma-separated list; fallback includes both backend and frontend Vercel URLs
 const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
   : env.NODE_ENV === 'production'
-  ? [env.APP_URL, 'http://localhost:5173', 'http://localhost:3000']
+  ? [
+      env.APP_URL,
+      'https://accounting-office-front-end.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ]
   : '*';
 
 app.use(
