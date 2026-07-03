@@ -1,7 +1,7 @@
 {
   "_type": "export",
   "__export_format": 4,
-  "__export_date": "2026-06-04T10:15:00.000Z",
+  "__export_date": "2026-07-02T10:00:00.000Z",
   "__export_source": "insomnia.desktop.app:v8.0.0",
   "resources": [
     {
@@ -9,7 +9,7 @@
       "_type": "workspace",
       "parentId": null,
       "name": "Accounting Hub Backend",
-      "description": "API completa - auth, users, companies, demand-types, demands, links, audit",
+      "description": "API completa — auth, users, companies, demand-types, demands, receipts, payments, audit, export",
       "scope": "collection"
     },
     {
@@ -28,6 +28,7 @@
         "demand_id": "",
         "subtask_id": "",
         "receipt_id": "",
+        "payment_id": "",
         "identifier": "admin.test",
         "password": "senha1234",
         "email": "admin.test@example.com"
@@ -228,13 +229,6 @@
         { "name": "Authorization", "value": "Bearer {{ _.token }}" }
       ],
       "metaSortKey": -70
-    },
-    {
-      "_id": "req_dt_remove_subtask", "_type": "request", "parentId": "fld_demand_types",
-      "name": "DELETE /demand-types/:id/subtask-templates/:templateId", "method": "DELETE",
-      "url": "{{ _.base_url }}/demand-types/{{ _.demand_type_id }}/subtask-templates/TEMPLATE_ID_AQUI",
-      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
-      "body": {}, "metaSortKey": -60
     },
 
     { "_id": "fld_links", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Company ↔ Demand Type Links (US-E02)", "metaSortKey": -75 },
@@ -444,17 +438,230 @@
       "body": {}, "metaSortKey": -40
     },
 
-    { "_id": "fld_audit", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Audit Logs", "metaSortKey": -60 },
+    { "_id": "fld_payments", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Payments — Recebimentos (US-H03)", "metaSortKey": -60 },
     {
-      "_id": "req_audit_list", "_type": "request", "parentId": "fld_audit",
-      "name": "GET /audit-logs", "method": "GET",
+      "_id": "req_payments_create_pix", "_type": "request", "parentId": "fld_payments",
+      "name": "POST /payments — PIX (US-H03a)", "method": "POST",
+      "url": "{{ _.base_url }}/payments",
+      "body": { "mimeType": "application/json", "text": "{\n  \"receiptId\": \"{{ _.receipt_id }}\",\n  \"paymentDate\": \"2026-07-02T10:00:00.000Z\",\n  \"amount\": 500.00,\n  \"method\": \"pix\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -100
+    },
+    {
+      "_id": "req_payments_create_transfer", "_type": "request", "parentId": "fld_payments",
+      "name": "POST /payments — Transferência bancária (US-H03a)", "method": "POST",
+      "url": "{{ _.base_url }}/payments",
+      "body": { "mimeType": "application/json", "text": "{\n  \"receiptId\": \"{{ _.receipt_id }}\",\n  \"paymentDate\": \"2026-07-02T14:00:00.000Z\",\n  \"amount\": 700.00,\n  \"method\": \"bank_transfer\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -90
+    },
+    {
+      "_id": "req_payments_create_final", "_type": "request", "parentId": "fld_payments",
+      "name": "POST /payments — Último pagamento (baixa automática RN-008)", "method": "POST",
+      "url": "{{ _.base_url }}/payments",
+      "body": { "mimeType": "application/json", "text": "{\n  \"receiptId\": \"{{ _.receipt_id }}\",\n  \"paymentDate\": \"2026-07-02T16:00:00.000Z\",\n  \"amount\": 300.00,\n  \"method\": \"cash\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -80
+    },
+    {
+      "_id": "req_payments_create_other", "_type": "request", "parentId": "fld_payments",
+      "name": "POST /payments — Método \"other\" (RN-008 — methodDescription obrigatório)", "method": "POST",
+      "url": "{{ _.base_url }}/payments",
+      "body": { "mimeType": "application/json", "text": "{\n  \"receiptId\": \"{{ _.receipt_id }}\",\n  \"paymentDate\": \"2026-07-02T10:00:00.000Z\",\n  \"amount\": 200.00,\n  \"method\": \"other\",\n  \"methodDescription\": \"Cheque pré-datado\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -75
+    },
+    {
+      "_id": "req_payments_create_exceed", "_type": "request", "parentId": "fld_payments",
+      "name": "POST /payments — ERRO: excede saldo (RN-007 → 409)", "method": "POST",
+      "url": "{{ _.base_url }}/payments",
+      "body": { "mimeType": "application/json", "text": "{\n  \"receiptId\": \"{{ _.receipt_id }}\",\n  \"paymentDate\": \"2026-07-02T10:00:00.000Z\",\n  \"amount\": 9999.00,\n  \"method\": \"pix\"\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -70
+    },
+    {
+      "_id": "req_payments_summary", "_type": "request", "parentId": "fld_payments",
+      "name": "GET /payments/summary/:receiptId — Resumo e saldo (US-H03c)", "method": "GET",
+      "url": "{{ _.base_url }}/payments/summary/{{ _.receipt_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -65
+    },
+    {
+      "_id": "req_payments_list", "_type": "request", "parentId": "fld_payments",
+      "name": "GET /payments — Todos os pagamentos (US-H03c)", "method": "GET",
+      "url": "{{ _.base_url }}/payments",
+      "parameters": [
+        { "name": "receiptId", "value": "{{ _.receipt_id }}", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -60
+    },
+    {
+      "_id": "req_payments_list_by_receipt", "_type": "request", "parentId": "fld_payments",
+      "name": "GET /payments?receiptId=... — Filtrar por recibo (US-H03c)", "method": "GET",
+      "url": "{{ _.base_url }}/payments",
+      "parameters": [
+        { "name": "receiptId", "value": "{{ _.receipt_id }}" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -55
+    },
+    {
+      "_id": "req_payments_get", "_type": "request", "parentId": "fld_payments",
+      "name": "GET /payments/:id — Buscar pagamento", "method": "GET",
+      "url": "{{ _.base_url }}/payments/{{ _.payment_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -50
+    },
+    {
+      "_id": "req_payments_cancel_attempt", "_type": "request", "parentId": "fld_payments",
+      "name": "PATCH /receipts/:id/cancel — ERRO: recibo tem pagamentos (→ 409 sem force)", "method": "PATCH",
+      "url": "{{ _.base_url }}/receipts/{{ _.receipt_id }}/cancel",
+      "body": { "mimeType": "application/json", "text": "{\n  \"reason\": \"Tentativa de cancelar recibo com pagamentos\",\n  \"force\": false\n}" },
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "Authorization", "value": "Bearer {{ _.token }}" }
+      ],
+      "metaSortKey": -45
+    },
+
+    { "_id": "fld_audit", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Audit Logs — Consulta com filtros (US-M02)", "metaSortKey": -55 },
+    {
+      "_id": "req_audit_list_all", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs — Todos (paginado)", "method": "GET",
       "url": "{{ _.base_url }}/audit-logs",
+      "parameters": [
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "20" }
+      ],
       "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
       "body": {}, "metaSortKey": -100
     },
+    {
+      "_id": "req_audit_filter_entity", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs?entity=payment — Filtrar por entidade", "method": "GET",
+      "url": "{{ _.base_url }}/audit-logs",
+      "parameters": [
+        { "name": "entity", "value": "payment" },
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "20" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -90
+    },
+    {
+      "_id": "req_audit_filter_action", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs?action=payment.created — Filtrar por ação", "method": "GET",
+      "url": "{{ _.base_url }}/audit-logs",
+      "parameters": [
+        { "name": "action", "value": "payment.created" },
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "20" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -80
+    },
+    {
+      "_id": "req_audit_filter_receipt", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs?entity=receipt — Ver emissão e baixas", "method": "GET",
+      "url": "{{ _.base_url }}/audit-logs",
+      "parameters": [
+        { "name": "entity", "value": "receipt" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -70
+    },
+    {
+      "_id": "req_audit_filter_date", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs — Filtrar por período (hoje)", "method": "GET",
+      "url": "{{ _.base_url }}/audit-logs",
+      "parameters": [
+        { "name": "dateFrom", "value": "2026-07-02T00:00:00.000Z" },
+        { "name": "dateTo", "value": "2026-07-02T23:59:59.000Z" },
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "50" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -60
+    },
+    {
+      "_id": "req_audit_filter_combined", "_type": "request", "parentId": "fld_audit",
+      "name": "GET /audit-logs — Combinado: entity + action + data", "method": "GET",
+      "url": "{{ _.base_url }}/audit-logs",
+      "parameters": [
+        { "name": "entity", "value": "payment" },
+        { "name": "action", "value": "payment.created" },
+        { "name": "dateFrom", "value": "2026-07-01T00:00:00.000Z" },
+        { "name": "page", "value": "1" },
+        { "name": "limit", "value": "10" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -50
+    },
 
-    { "_id": "fld_other", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Outros (placeholders)", "metaSortKey": -50 },
-    { "_id": "req_tenants", "_type": "request", "parentId": "fld_other", "name": "GET /tenants", "method": "GET", "url": "{{ _.base_url }}/tenants", "body": {}, "headers": [], "metaSortKey": -100 },
-    { "_id": "req_payments_placeholder", "_type": "request", "parentId": "fld_other", "name": "GET /payments (placeholder — módulo não implementado)", "method": "GET", "url": "{{ _.base_url }}/payments", "body": {}, "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }], "metaSortKey": -80 }
+    { "_id": "fld_exports", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Export CSV (US-M01)", "metaSortKey": -50 },
+    {
+      "_id": "req_export_demands", "_type": "request", "parentId": "fld_exports",
+      "name": "GET /export/csv?type=demands — Exportar demandas", "method": "GET",
+      "url": "{{ _.base_url }}/export/csv",
+      "parameters": [
+        { "name": "type", "value": "demands" },
+        { "name": "competenceMonth", "value": "5", "disabled": true },
+        { "name": "competenceYear", "value": "2026", "disabled": true },
+        { "name": "companyId", "value": "{{ _.company_id }}", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -100
+    },
+    {
+      "_id": "req_export_payments", "_type": "request", "parentId": "fld_exports",
+      "name": "GET /export/csv?type=payments — Exportar pagamentos", "method": "GET",
+      "url": "{{ _.base_url }}/export/csv",
+      "parameters": [
+        { "name": "type", "value": "payments" },
+        { "name": "receiptId", "value": "{{ _.receipt_id }}", "disabled": true }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -90
+    },
+    {
+      "_id": "req_export_payments_by_receipt", "_type": "request", "parentId": "fld_exports",
+      "name": "GET /export/csv?type=payments&receiptId=... — Pagamentos de um recibo", "method": "GET",
+      "url": "{{ _.base_url }}/export/csv",
+      "parameters": [
+        { "name": "type", "value": "payments" },
+        { "name": "receiptId", "value": "{{ _.receipt_id }}" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -80
+    },
+    {
+      "_id": "req_export_invalid_type", "_type": "request", "parentId": "fld_exports",
+      "name": "GET /export/csv?type=INVALIDO — ERRO: 400 INVALID_EXPORT_TYPE", "method": "GET",
+      "url": "{{ _.base_url }}/export/csv",
+      "parameters": [
+        { "name": "type", "value": "invoices" }
+      ],
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {}, "metaSortKey": -70
+    },
+
+    { "_id": "fld_other", "_type": "request_group", "parentId": "wrk_accounting_hub", "name": "Outros", "metaSortKey": -40 },
+    { "_id": "req_tenants", "_type": "request", "parentId": "fld_other", "name": "GET /tenants", "method": "GET", "url": "{{ _.base_url }}/tenants", "body": {}, "headers": [], "metaSortKey": -100 }
   ]
 }

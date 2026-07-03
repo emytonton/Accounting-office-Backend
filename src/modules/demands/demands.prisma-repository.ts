@@ -203,4 +203,12 @@ export class PrismaDemandsRepository implements IDemandsRepository {
     });
     return toSubtask(record);
   }
+
+  async delete(tenantId: string, id: string): Promise<boolean> {
+    const existing = await prisma.demand.findFirst({ where: { tenantId, id } });
+    if (!existing) return false;
+    // Subtarefas são removidas em cascata (onDelete: Cascade no schema).
+    await prisma.demand.delete({ where: { id } });
+    return true;
+  }
 }

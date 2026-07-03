@@ -303,6 +303,15 @@ export class DemandsService {
     return withOverdueFlag(updated as Demand);
   }
 
+  /// Exclui uma demanda (e suas subtarefas em cascata). Devolve a demanda
+  /// removida para fins de auditoria. Restrito ao admin (validado na rota).
+  async deleteDemand(tenantId: string, id: string): Promise<Demand> {
+    const demand = await this.repository.findById(tenantId, id);
+    if (!demand) throw new AppError('Demand not found', 404, 'NOT_FOUND');
+    await this.repository.delete(tenantId, id);
+    return demand;
+  }
+
   /// US-D04: monta o painel consolidado com totais e percentuais
   /// agrupados por setor e por empresa.
   async getDashboard(filters: DashboardFilters): Promise<DashboardResult> {

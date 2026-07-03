@@ -67,30 +67,38 @@ describe('UC-A02 — Logout / Session Invalidation', () => {
   });
 
   describe('RNF-002 — Sliding window refresh', () => {
-    it('should issue X-Refresh-Token when token has less than 5 minutes remaining', async () => {
-      const shortLivedToken = jwt.sign(
-        { userId: 'user-id', tenantId: TENANT_ID, role: 'admin' },
+    it('should issue X-Refresh-Token when token is past the midpoint of its lifetime', async () => {
+      // Token de 30 min com iat 20 min atrás → já passou da metade (15 min).
+      const nowSec = Math.floor(Date.now() / 1000);
+      const pastMidpointToken = jwt.sign(
+        {
+          userId: 'user-id',
+          tenantId: TENANT_ID,
+          role: 'admin',
+          iat: nowSec - 20 * 60,
+          exp: nowSec + 10 * 60,
+        },
         JWT_SECRET,
-        { expiresIn: '4m' },
       );
 
       const res = await request(app)
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${shortLivedToken}`);
+        .set('Authorization', `Bearer ${pastMidpointToken}`);
 
       expect(res.headers['x-refresh-token']).toBeDefined();
     });
 
-    it('should not issue X-Refresh-Token when token has more than 5 minutes remaining', async () => {
-      const longLivedToken = jwt.sign(
+    it('should not issue X-Refresh-Token when token is still in the first half of its lifetime', async () => {
+      // Token recém-emitido (30 min) → ainda na primeira metade.
+      const freshToken = jwt.sign(
         { userId: 'user-id', tenantId: TENANT_ID, role: 'admin' },
         JWT_SECRET,
-        { expiresIn: '29m' },
+        { expiresIn: '30m' },
       );
 
       const res = await request(app)
         .post('/auth/logout')
-        .set('Authorization', `Bearer ${longLivedToken}`);
+        .set('Authorization', `Bearer ${freshToken}`);
 
       expect(res.headers['x-refresh-token']).toBeUndefined();
     });

@@ -6,7 +6,10 @@ import { AuthTokenPayload } from '../../modules/auth/auth.types';
 import { tokenBlacklist } from '../services/token-blacklist';
 import { userSessionInvalidator } from '../services/user-session-invalidator';
 
-const REFRESH_THRESHOLD_MS = 5 * 60 * 1000;
+// RNF-002: sessão expira após 30 min de INATIVIDADE. Para isso, renovamos o
+// token sempre que ele já passou da metade da sua vida — assim qualquer
+// requisição na segunda metade "desliza" a janela, e só uma inatividade real
+// (sem nenhuma chamada) deixa o token expirar.
 
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
@@ -36,8 +39,11 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
       sector: payload.sector,
     };
 
-    // Sliding window (RNF-002): renew token when less than 5 min remains
-    if (payload.exp && payload.exp * 1000 - Date.now() < REFRESH_THRESHOLD_MS) {
+    // Sliding window (RNF-002): renova quando já passou da metade da vida do token.
+    const nowSec = Date.now() / 1000;
+    const pastMidpoint =
+      payload.exp && payload.iat && nowSec > (payload.exp + payload.iat) / 2;
+    if (pastMidpoint) {
       const newPayload: AuthTokenPayload = {
         userId: payload.userId,
         tenantId: payload.tenantId,

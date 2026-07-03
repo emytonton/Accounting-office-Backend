@@ -187,6 +187,36 @@ export async function updateDueDate(
   }
 }
 
+// Exclusão de demanda (admin) — registrada na auditoria.
+export async function deleteDemand(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const user = requireUser(req);
+    const removed = await service.deleteDemand(user.tenantId, req.params.id);
+
+    await audit.log({
+      tenantId: user.tenantId,
+      userId: user.id,
+      action: 'demand.deleted',
+      entity: 'demand',
+      entityId: removed.id,
+      metadata: {
+        companyId: removed.companyId,
+        demandTypeId: removed.demandTypeId,
+        competence: `${removed.competenceYear}-${String(removed.competenceMonth).padStart(2, '0')}`,
+        status: removed.status,
+      },
+    });
+
+    successResponse(res, { id: removed.id, deleted: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // US-D04: painel consolidado
 export async function dashboard(
   req: Request,

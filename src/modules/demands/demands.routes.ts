@@ -6,6 +6,7 @@ import {
   updateStatus,
   setSubtaskCompletion,
   updateDueDate,
+  deleteDemand,
   dashboard,
 } from './demands.controller';
 import { authenticate } from '../../shared/middlewares/auth.middleware';
@@ -66,3 +67,6 @@ demandsRoutes.patch(
   validate(setSubtaskCompletionSchema),
   setSubtaskCompletion,
 );
+
+// Exclusão de demanda (apenas admin)
+demandsRoutes.delete('/:id', authenticate, authorize('admin'), deleteDemand);

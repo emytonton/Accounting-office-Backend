@@ -38,6 +38,8 @@ export interface IDemandsRepository {
     subtaskId: string,
     completedAt: Date | null,
   ): Promise<Subtask | null>;
+  /// Remove a demanda (e suas subtarefas em cascata). Retorna false se não existir.
+  delete(tenantId: string, id: string): Promise<boolean>;
 }
 
 export { PENDING_STATUSES };
@@ -168,5 +170,12 @@ export class InMemoryDemandsRepository implements IDemandsRepository {
       }
     }
     return null;
+  }
+
+  async delete(tenantId: string, id: string): Promise<boolean> {
+    const idx = this.demands.findIndex((d) => d.tenantId === tenantId && d.id === id);
+    if (idx === -1) return false;
+    this.demands.splice(idx, 1);
+    return true;
   }
 }
