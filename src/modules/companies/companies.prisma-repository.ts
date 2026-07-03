@@ -45,7 +45,7 @@ export class PrismaCompaniesRepository implements ICompaniesRepository {
     }
 
     if (filters.sector) {
-      where.sector = filters.sector;
+      where.sector = { equals: filters.sector, mode: 'insensitive' };
     }
 
     const page = filters.page ?? 1;

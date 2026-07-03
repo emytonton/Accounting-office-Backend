@@ -67,7 +67,7 @@ function toSubtask(record: RawSubtaskTemplate): SubtaskTemplate {
 export class PrismaDemandTypesRepository implements IDemandTypesRepository {
   async findAll(filters: ListDemandTypesFilters): Promise<DemandType[]> {
     const where: Record<string, unknown> = { tenantId: filters.tenantId };
-    if (filters.sector) where.sector = filters.sector;
+    if (filters.sector) where.sector = { equals: filters.sector, mode: 'insensitive' };
     if (typeof filters.isActive === 'boolean') where.isActive = filters.isActive;
 
     const records = await prisma.demandType.findMany({
