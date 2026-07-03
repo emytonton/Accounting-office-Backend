@@ -1,9 +1,21 @@
 import { Request, Response, NextFunction } from 'express';
 import { ExportsService } from './exports.service';
-import { demandsRepository, paymentsRepository } from '../../shared/repositories';
+import {
+  demandsRepository,
+  paymentsRepository,
+  companiesRepository,
+  demandTypesRepository,
+  receiptsRepository,
+} from '../../shared/repositories';
 import { AppError } from '../../shared/errors/AppError';
 
-const service = new ExportsService(demandsRepository, paymentsRepository);
+const service = new ExportsService(
+  demandsRepository,
+  paymentsRepository,
+  companiesRepository,
+  demandTypesRepository,
+  receiptsRepository,
+);
 
 export async function exportCsv(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
